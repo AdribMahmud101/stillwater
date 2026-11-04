@@ -101,6 +101,19 @@ modal_app.py    Modal deployment
 gpu_services.py optional Glimmer GPU service
 ```
 
-## Models used
+## Open-weight models: what we use and where it runs
 
-Meta SAM 3.1 (hosted segmentation), Muse Spark Open (open weights, via Baseten), Muse Spark 1.3 (Meta Model API), and Muse Glimmer 30B (optional second witness on a Modal GPU).
+| Model | Open weights? | Role in StillWater | Where it runs |
+|---|---|---|---|
+| **Muse Spark Open** (`meta-models/muse-spark-open-1026`) | **Yes** (open-weight release) | Scout (which containers to look for) and **Witness A** (per-container judgement). Used in every scan. | **Baseten** (partner-provided inference), called from the app on Modal |
+| **Muse Glimmer 30B** | **Yes** (reported Apache 2.0) | Optional **Witness B**. Deployed by us (`gpu_services.py`), tested, and returns valid structured answers, but its cold start exceeded 10 minutes, so it is **not in the default live pipeline**. Switch on with `WITNESS_B=glimmer`. | **Our own GPU on Modal** (L4, scale-to-zero, vLLM-style OpenAI-compatible server) |
+| **SAM 3.1** | Weights are published by Meta (`facebook/sam3.1`, gated, SAM License) | Person-privacy masks (every frame) and segmentation / tracking of every container. Used in every scan. | **Meta's hosted Model API**. We did **not** self-host SAM 3.1 in the live app. |
+| **Muse Spark 1.3** | **No** (hosted model) | Default live **Witness B**, the second independent judgement. | **Meta Model API** |
+
+In short: every scan uses the open-weight Muse Spark Open through Baseten. Muse Glimmer 30B (open weights, our own hardware) is built and tested as an alternative second witness but is not on the default path. SAM 3.1 and Muse Spark 1.3 are called through Meta's hosted API.
+
+**Built with Muse Spark Open.** This project uses Muse Spark Open under the Muse Model License.
+
+## Models used (summary)
+
+Meta SAM 3.1 (hosted segmentation), Muse Spark Open (open weights, via Baseten), Muse Spark 1.3 (Meta Model API), and Muse Glimmer 30B (optional second witness on our own Modal GPU).
