@@ -1569,14 +1569,15 @@ footer {
       });
       d.appendChild(toggle); d.appendChild(panel);
     }
-    if (cc.timestamp !== undefined && cc.timestamp !== null) {
-      var jb = el("button", "btn btn-secondary", "Jump to " + fmtTime(cc.timestamp));
+    var jumpAt = cc.timestamp_seconds !== undefined && cc.timestamp_seconds !== null ? cc.timestamp_seconds : cc.timestamp;
+    if (jumpAt !== undefined && jumpAt !== null && !isNaN(Number(jumpAt))) {
+      var jb = el("button", "btn btn-secondary", "Jump to " + fmtTime(jumpAt));
       jb.style.marginTop = "8px";
       jb.addEventListener("click", function () {
         var v = document.getElementById("mainVideo");
         if (v) {
           try {
-            v.currentTime = Number(cc.timestamp) || 0;
+            v.currentTime = Number(jumpAt) || 0;
             v.play();
           } catch (e) {}
         }
@@ -1935,7 +1936,7 @@ footer {
      ["Decide", "Fixed, auditable rules assign risk. Models describe; code decides.", "Fixed rules"],
      ["Orders", "Bilingual Bangla and English cleanup work orders include photo evidence.", "StillWater server"]].forEach(function (step) { var li = el("li", "how-step"); li.appendChild(el("strong", null, step[0])); li.appendChild(el("p", null, step[1])); li.appendChild(el("small", "help", "Runs: " + step[2])); ol.appendChild(li); }); c.appendChild(ol);
     var rules = el("table", "rules-table"); Object.keys(explanations).forEach(function (key) { var tr = el("tr"); tr.appendChild(el("td", null, ({R0:"Review",R1:"Review",R1b:"Review",R2:"Low",R3:"High",R4:"High",R5:"Medium",R6:"Low",R7:"Review",R8:"Medium",R9:"High"})[key])); tr.appendChild(el("td", null, explanations[key])); rules.appendChild(tr); }); c.appendChild(el("h3", null, "Decision rules")); c.appendChild(rules); app.appendChild(c);
-    var meta = el("div", "card"); meta.appendChild(el("h2", null, "Meta tooling")); meta.appendChild(el("p", null, "Meta SAM 3.1, Muse Spark Open, Muse Spark 1.3, Muse Glimmer 30B")); meta.appendChild(el("p", null, "Open weights: Muse Spark Open")); meta.appendChild(el("p", null, "Built Nov 2–4, 2026 for the Meta Global AI Developer Hackathon.")); app.appendChild(meta);
+    var meta = el("div", "card"); meta.appendChild(el("h2", null, "Meta tooling")); meta.appendChild(el("p", null, "Meta SAM 3.1, Muse Spark Open, Muse Spark 1.3, Muse Glimmer 30B")); meta.appendChild(el("p", null, "Open weights: Muse Spark Open")); meta.appendChild(el("p", null, "Built with Muse Spark Open.")); meta.appendChild(el("p", null, "Built Nov 2–4, 2026 for the Meta Global AI Developer Hackathon.")); app.appendChild(meta);
     var ev = el("div", "card"); ev.appendChild(el("h2", null, "Evaluation")); app.appendChild(ev); fetch("/samples/eval.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw Error(); return r.json(); }).then(function (data) { ev.appendChild(el("p", null, data.note)); var wrap = el("div", "table-scroll"), table = el("table", "eval-table"), head = el("tr"); var cols = [["clip","Clip"],["seconds_of_video","Video length (s)"],["scan_seconds","Scan time (s)"],["cost_usd","Cost (USD)"],["high","High"],["medium","Medium"],["review","Review"],["low","Low"],["our_check","Our check"]]; cols.forEach(function (col) { head.appendChild(el("th", null, col[1])); }); table.appendChild(head); (data.rows || []).forEach(function (row) { var tr = el("tr"); cols.forEach(function (col) { tr.appendChild(el("td", null, String(row[col[0]] == null ? "" : row[col[0]]))); }); table.appendChild(tr); }); wrap.appendChild(table); ev.appendChild(wrap); }).catch(function () { ev.appendChild(el("p", "help", "Evaluation data is unavailable.")); });
   }
   lightbox.addEventListener("click", function () {

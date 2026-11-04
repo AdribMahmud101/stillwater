@@ -102,7 +102,7 @@ class Store:
         if isinstance(lat, bool) or isinstance(lng, bool) or not isinstance(lat, (int, float)) or not isinstance(lng, (int, float)) or not (-90 <= lat <= 90 and -180 <= lng <= 180):
             raise ValueError('invalid coordinates')
         with self._connect() as db:
-            db.execute('UPDATE scans SET area = ?, lat = ?, lng = ? WHERE id = ? AND lat IS NULL', (area.strip(), lat, lng, scan_id))
+            db.execute('UPDATE scans SET area = ?, lat = COALESCE(lat, ?), lng = COALESCE(lng, ?) WHERE id = ?', (area.strip(), lat, lng, scan_id))
 
     def set_media(self, scan_id, media_type=None, duration_seconds=None):
         media_type = self._normalize_media_type(media_type)

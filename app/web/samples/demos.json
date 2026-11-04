@@ -1,40 +1,40 @@
 [
  {
-  "scan_id": "4eb36507-4a24-4bba-ac5a-de8658960f9f",
+  "scan_id": "ddb3dd50-ca3e-4ba5-aa15-462e55c047e6",
   "title": "Rooftop buckets and pots",
   "kind": "video",
   "blurb": "Red bucket holding water, flower pots, and what to do about each.",
   "thumb": "demos/01-roof1-before.jpg",
   "counts": {
    "high": 2,
-   "medium": 5,
-   "review": 8,
+   "medium": 8,
+   "review": 5,
    "low": 0
   },
-  "seconds": 468,
+  "seconds": 270,
   "area": "Mirpur 10, Dhaka (demo location)",
   "lat": 23.8069,
   "lng": 90.3687
  },
  {
-  "scan_id": "9111cf24-c2f2-4cff-aef9-7edcf563c782",
+  "scan_id": "4750aa8a-158b-4fb0-a109-38a7a4fd1469",
   "title": "Red bucket, close-up",
   "kind": "photo",
   "blurb": "A single photo works too: one bucket with standing water.",
   "thumb": "demos/02-clip-red-buckets.jpg",
   "counts": {
    "high": 2,
-   "medium": 3,
-   "review": 2,
-   "low": 1
+   "medium": 1,
+   "review": 3,
+   "low": 2
   },
-  "seconds": 66,
+  "seconds": 62,
   "area": "Mohammadpur, Dhaka (demo location)",
   "lat": 23.7662,
   "lng": 90.3589
  },
  {
-  "scan_id": "caceddc4-ac72-4597-b273-4289af0f1e0d",
+  "scan_id": "1b474e4e-3aa9-4963-8a40-d1da68af7dbf",
   "title": "Drain grate with pooled water",
   "kind": "photo",
   "blurb": "Water pooling near a street drain, plus a basin nearby.",
@@ -45,13 +45,13 @@
    "review": 0,
    "low": 0
   },
-  "seconds": 56,
+  "seconds": 47,
   "area": "Dhanmondi, Dhaka (demo location)",
   "lat": 23.7461,
   "lng": 90.3742
  },
  {
-  "scan_id": "932d224d-7953-49fd-b98a-11cbe17be42e",
+  "scan_id": "585879b7-22ef-4a36-b568-041eb7da0bea",
   "title": "Wet rooftop",
   "kind": "video",
   "blurb": "Rainwater pooled on a flat roof.",
@@ -59,16 +59,16 @@
   "counts": {
    "high": 1,
    "medium": 0,
-   "review": 0,
-   "low": 2
+   "review": 1,
+   "low": 1
   },
-  "seconds": 184,
+  "seconds": 219,
   "area": "Gulshan, Dhaka (demo location)",
   "lat": 23.7925,
   "lng": 90.4078
  },
  {
-  "scan_id": "db483da5-e66b-4280-bb29-73302e6e9a26",
+  "scan_id": "c462c036-a9b7-4d3f-a4dc-9cd3967c18a9",
   "title": "Muddy path puddle",
   "kind": "video",
   "blurb": "Standing water on a dirt path, tracked through the clip.",
@@ -79,13 +79,13 @@
    "review": 0,
    "low": 0
   },
-  "seconds": 276,
+  "seconds": 252,
   "area": "Badda, Dhaka (demo location)",
   "lat": 23.7806,
   "lng": 90.4262
  },
  {
-  "scan_id": "e378f36c-0c89-4cef-8d18-f5be37771ee2",
+  "scan_id": "0e60e719-ff64-480f-9987-60bc6d927356",
   "title": "Street-side puddle",
   "kind": "video",
   "blurb": "Wet street with water pooled beside the kerb.",
@@ -96,7 +96,7 @@
    "review": 2,
    "low": 0
   },
-  "seconds": 403,
+  "seconds": 415,
   "area": "Jatrabari, Dhaka (demo location)",
   "lat": 23.7104,
   "lng": 90.4344

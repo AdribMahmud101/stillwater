@@ -250,7 +250,7 @@ class ScanSummaryTests(unittest.TestCase):
             (folder / 'results.json').unlink()
             self.assertEqual({s['id']: s for s in client.get('/api/scans').json()['scans']}[scan['id']]['summary']['total'], 4)
 
-    def test_seed_locations_only_if_missing(self):
+    def test_seed_locations_sets_label_and_fills_only_missing_coordinates(self):
         import json
         from app.main import seed_demo_locations
         from app.store import Store
@@ -264,6 +264,6 @@ class ScanSummaryTests(unittest.TestCase):
             seed_demo_locations(store, path)
             seed_demo_locations(store, path)
             self.assertEqual((store.get_scan(one['id'])['area'], store.get_scan(one['id'])['lat']), ('New', 23))
-            self.assertEqual(store.get_scan(two['id'])['area'], 'Existing')
+            self.assertEqual((store.get_scan(two['id'])['area'], store.get_scan(two['id'])['lat']), ('Changed', 1))
             path.write_text('{')
             seed_demo_locations(store, path)
