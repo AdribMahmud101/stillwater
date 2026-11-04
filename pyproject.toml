@@ -1,0 +1,26 @@
+[project]
+name = "stillwater"
+version = "0.1.0"
+description = "Phone-video container inspection"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.0",
+    "meta-sam-parser>=0.1.0,<0.2",
+    "modal>=1.6.3",
+    "numpy>=2.5.4",
+    "opencv-python-headless>=5.0.0.93",
+    "python-multipart>=0.0.33",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "hypothesis>=6",
+    "ruff>=0.8",
+    "httpx>=0.28.1",
+]
+
+[tool.ruff.lint]
+select = ["E9", "F"]
+ignore = ["F841"]

@@ -1,0 +1,8 @@
+name = "stillwater-proxy"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+workers_dev = false
+
+routes = [
+  { pattern = "stillwater.onefusionlab.systems", custom_domain = true }
+]

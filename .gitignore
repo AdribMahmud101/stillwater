@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+api credentials.md
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+data/
+*.sqlite3
+
+footages/
+backup/

@@ -1,0 +1,25 @@
+# Secrets and environment configurations
+.env
+.env.*
+api credentials.md
+*api credentials*
+
+# Video footages and persistent runtime data
+footages/
+data/
+
+# Virtual environment and version control
+.venv/
+.git/
+
+# Tooling, test artifacts, and archives
+.playwright-mcp/
+*.zip
+stillwater-handover.zip
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/

@@ -1,0 +1,43 @@
+{
+  "response": {
+    "choices": [
+      {
+        "finish_reason": "stop",
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": "{\"holds_water\": \"unsure\", \"covered\": \"unsure\", \"water_visible\": \"unsure\", \"orientation\": \"unsure\", \"exposed_to_rain\": \"unsure\"}\n",
+          "reasoning_content": "Describe this container as JSON with keys holds_water, covered, water_visible, orientation, exposed_to_rain. Use yes, no, or unsure except orientation: upright, inverted, on_side, or unsure. Use unsure when not visible. Return JSON only.\n\nThe image is just a blue square. No container visible. So unsure for all? holds_water? unsure. covered? unsure. water_visible? unsure. orientation? unsure. exposed_to_rain? unsure.\n\nReturn JSON only.\n\n"
+        }
+      }
+    ],
+    "created": 1793704000,
+    "model": "muse-glimmer",
+    "system_fingerprint": "b10353-f8def7fe1",
+    "object": "chat.completion",
+    "usage": {
+      "completion_tokens": 149,
+      "prompt_tokens": 210,
+      "total_tokens": 359,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    "id": "chatcmpl-LXmj4XNSRmAP8nulCmV6irsrSvgZUbld",
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 210,
+      "prompt_ms": 1019.311,
+      "prompt_per_token_ms": 4.853861904761905,
+      "prompt_per_second": 206.02151845707542,
+      "predicted_n": 149,
+      "predicted_ms": 10245.695,
+      "predicted_per_token_ms": 68.76305369127516,
+      "predicted_per_second": 14.542693297038415
+    }
+  },
+  "valid_json_object": true,
+  "cold_start_seconds": 20.532244202,
+  "inference_seconds": 11.295802329,
+  "elapsed_gpu_seconds_lower_bound": 31.828214603000003
+}

@@ -1,0 +1,115 @@
+{
+ "note": "Our own visual check of 10 team-recorded clips. No ground-truth labels, so this is not an accuracy benchmark. Cost is a list-price estimate from measured usage.",
+ "rows": [
+  {
+   "clip": "roof1_before.mp4",
+   "seconds_of_video": 16.6,
+   "scan_seconds": 468,
+   "cost_usd": 0.36,
+   "high": 2,
+   "medium": 5,
+   "review": 8,
+   "low": 0,
+   "our_check": "Correct: red bucket with standing water flagged high; pots medium or review."
+  },
+  {
+   "clip": "roof1_after_empty.mp4",
+   "seconds_of_video": 12.3,
+   "scan_seconds": 305,
+   "cost_usd": 0.27,
+   "high": 2,
+   "medium": 6,
+   "review": 7,
+   "low": 0,
+   "our_check": "Known failure: red-stained empty pots flagged high (false positive)."
+  },
+  {
+   "clip": "a_clear_puddle.mp4",
+   "seconds_of_video": 13.1,
+   "scan_seconds": 276,
+   "cost_usd": 0.29,
+   "high": 2,
+   "medium": 0,
+   "review": 0,
+   "low": 0,
+   "our_check": "Correct: both puddles flagged high."
+  },
+  {
+   "clip": "stree_side.mp4",
+   "seconds_of_video": 8.2,
+   "scan_seconds": 403,
+   "cost_usd": 0.19,
+   "high": 2,
+   "medium": 0,
+   "review": 2,
+   "low": 0,
+   "our_check": "Correct: street puddle flagged high, but counted twice (puddle and standing water)."
+  },
+  {
+   "clip": "wet_roof.mp4",
+   "seconds_of_video": 17.0,
+   "scan_seconds": 184,
+   "cost_usd": 0.36,
+   "high": 1,
+   "medium": 0,
+   "review": 0,
+   "low": 2,
+   "our_check": "Plausible: rooftop water flagged high; water tanks low. Not independently verified."
+  },
+  {
+   "clip": "dry_pots.mp4",
+   "seconds_of_video": 8.1,
+   "scan_seconds": 293,
+   "cost_usd": 0.18,
+   "high": 1,
+   "medium": 2,
+   "review": 2,
+   "low": 0,
+   "our_check": "Questionable: one dry-looking pot flagged high."
+  },
+  {
+   "clip": "garden_side_2.mp4",
+   "seconds_of_video": 10.4,
+   "scan_seconds": 288,
+   "cost_usd": 0.24,
+   "high": 0,
+   "medium": 2,
+   "review": 3,
+   "low": 1,
+   "our_check": "Plausible: 2 pots medium, rest review. Not independently verified."
+  },
+  {
+   "clip": "garden_side.mp4",
+   "seconds_of_video": 7.6,
+   "scan_seconds": 132,
+   "cost_usd": 0.18,
+   "high": 0,
+   "medium": 0,
+   "review": 2,
+   "low": 0,
+   "our_check": "Nothing clearly risky; 2 left for review."
+  },
+  {
+   "clip": "f1.mp4",
+   "seconds_of_video": 7.1,
+   "scan_seconds": 132,
+   "cost_usd": 0.15,
+   "high": 0,
+   "medium": 0,
+   "review": 1,
+   "low": 0,
+   "our_check": "Bin with rubbish and wheel; 1 left for review."
+  },
+  {
+   "clip": "wet_c1.mp4",
+   "seconds_of_video": 12.2,
+   "scan_seconds": 149,
+   "cost_usd": 0.26,
+   "high": 0,
+   "medium": 0,
+   "review": 0,
+   "low": 1,
+   "our_check": "Basin with debris; only 1 low. Possible miss, not verified."
+  }
+ ]
+}

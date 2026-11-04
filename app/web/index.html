@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StillWater — Find the still water</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root {
+  --brand: #0e7490;
+  --brand-soft: #e0f2f7;
+  --ink: #0f172a;
+  --ink-2: #475569;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --line: #e2e8f0;
+  --risk-high: #dc2626;
+  --risk-med: #d97706;
+  --risk-low: #16a34a;
+  --risk-review: #7c3aed;
+  --notseen: #64748b;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgb(0 0 0 / .06), 0 4px 12px rgb(0 0 0 / .04);
+  --gap: 8px;
+}
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e2e8f0;
+  --ink-2: #94a3b8;
+  --surface: #0f172a;
+  --surface-2: #1e293b;
+  --line: #334155;
+  --brand-soft: #164e63;
+  --brand: #22a6c7;
+}
+.theme-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; margin-left: 8px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.theme-toggle:hover { border-color: var(--brand); }
+.theme-toggle:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.theme-toggle .icon-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-sun { display: none; }
+:root[data-theme="dark"] .theme-toggle .icon-moon { display: inline; }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.5;
+}
+a {
+  color: var(--brand);
+}
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button, input, select {
+  font: inherit;
+  min-height: 44px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--brand);
+  color: #fff;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: opacity .18s ease-out, transform .18s ease-out;
+}
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.btn-secondary {
+  background: transparent;
+  color: var(--brand);
+  border: 1px solid var(--brand);
+}
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--ink);
+}
+.nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.nav a {
+  text-decoration: none;
+  color: var(--ink-2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.nav a.active {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: var(--line);
+}
+.status-pill {
+  margin-left: auto;
+  font-size: 12px;
+  border-radius: 999px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.status-pill.ok {
+  color: var(--risk-low);
+  border-color: var(--risk-low);
+}
+.status-pill.off {
+  color: var(--risk-high);
+  border-color: var(--risk-high);
+}
+.banner {
+  background: #fef2f2;
+  color: #991b1b;
+  border-bottom: 1px solid #fecaca;
+  padding: 8px 16px;
+  text-align: center;
+  font-size: 14px;
+}
+main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+.hero h1 {
+  font-size: 28px;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+.hero p {
+  margin: 0 0 16px;
+  color: var(--ink-2);
+}
+.dropzone {
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition: border-color .18s ease-out, background .18s ease-out;
+}
+.dropzone.drag {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+.dropzone strong {
+  display: block;
+  margin-bottom: 8px;
+}
+.preview {
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.preview img, .preview video {
+  max-width: 280px;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.field {
+  margin: 16px 0;
+}
+.field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.field input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+.help {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.error {
+  font-size: 14px;
+  color: var(--risk-high);
+}
+.progress-bar {
+  height: 8px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.progress-bar span {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+  width: 0%;
+  transition: width .2s ease-out;
+}
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.scan-progress-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-top: 24px; }
+.scan-progress-head strong { font-size: 2rem; line-height: 1; color: var(--brand); font-variant-numeric: tabular-nums; }
+.scan-progress-head p { margin: 0; font-weight: 600; }
+.scan-progress-bar { height: 14px; margin: 14px 0 8px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.scan-progress-bar span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--brand); transition: width .8s ease-out; }
+.stage-unknown { height: 4px; margin: 12px 0; overflow: hidden; border-radius: 999px; background: var(--line); }
+.stage-unknown::after { content: ""; display: block; height: 100%; width: 35%; background: var(--brand); opacity: .65; animation: scan-shimmer 1.5s ease-in-out infinite alternate; }
+@keyframes scan-shimmer { from { transform: translateX(0); } to { transform: translateX(185%); } }
+.scan-steps { list-style: none; padding: 0; margin: 24px 0; display: grid; gap: 8px; }
+.scan-steps li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: 1px solid var(--line); border-radius: var(--radius-sm); color: var(--ink-2); background: var(--surface-2); }
+.scan-steps li.active { border-color: var(--brand); color: var(--ink); background: var(--brand-soft); font-weight: 600; }
+.scan-steps li.done { color: var(--ink); }
+.scan-steps .step-mark { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; font-size: 12px; }
+.scan-steps .done .step-mark { color: var(--risk-low); border-color: var(--risk-low); }
+.scan-steps .active .step-mark { color: var(--brand); border-color: var(--brand); }
+.scan-steps .step-time { margin-left: auto; font-size: 13px; color: var(--ink-2); font-weight: 400; }
+.stepper {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 0;
+  list-style: none;
+  margin: 0;
+}
+.stepper li {
+  flex: 1 0 90px;
+  min-width: 90px;
+  text-align: center;
+  font-size: 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 6px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.stepper li.done {
+  border-color: var(--risk-low);
+  color: var(--risk-low);
+}
+.stepper li.active {
+  border-color: var(--brand);
+  color: var(--brand);
+  background: var(--brand-soft);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+}
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.stat small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.3; color: var(--ink-2); }
+.stat {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
+.stat b {
+  display: block;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+.stat span {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid;
+}
+.badge.high {
+  color: var(--risk-high);
+  border-color: var(--risk-high);
+}
+.badge.medium {
+  color: var(--risk-med);
+  border-color: var(--risk-med);
+}
+.badge.low {
+  color: var(--risk-low);
+  border-color: var(--risk-low);
+}
+.badge.review {
+  color: var(--risk-review);
+  border-color: var(--risk-review);
+}
+.badge.notseen {
+  color: var(--notseen);
+  border-color: var(--notseen);
+}
+.thumb {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.checks-toggle { margin-top: 10px; }
+.checks-panel { margin-top: 10px; padding: 10px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; color: var(--ink); }
+.checks-panel[hidden] { display: none; }
+.checks-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
+.checks-grid > * { min-width: 0; overflow-wrap: anywhere; }
+.checks-heading { font-size: .85rem; font-weight: 700; }
+.checks-row { padding: 7px 0 7px 8px; border-left: 3px solid transparent; border-top: 1px solid var(--line); }
+.checks-row.differ { border-left-color: var(--risk-review); }
+.checks-row-title { font-size: .8rem; color: var(--ink-2); margin-bottom: 4px; }
+.checks-differ { color: var(--risk-review); font-weight: 700; }
+.checks-summary { margin: 8px 0 0; font-size: .85rem; font-weight: 700; }
+.card.risk-high, .order-card.high {
+  border: 2px solid var(--risk-high);
+  background: color-mix(in srgb, var(--risk-high) 6%, var(--surface));
+}
+.order-card.high { border-left-width: 8px; }
+.order-card.medium { border-left: 8px solid var(--risk-med); }
+.order-card.review { border-left: 8px solid var(--risk-review); }
+.order-card.low { border-left: 8px solid var(--risk-low); }
+.card.risk-high .thumb { border-color: var(--risk-high); }
+.order-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.order-card.high strong { color: var(--risk-high); }
+.samples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+.new-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: start; }
+.new-layout > .card { margin: 0; }
+@media (min-width: 800px) {
+  .new-layout { grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr); }
+  .new-layout > :last-child { position: sticky; top: 76px; }
+  .new-layout .demos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .new-layout .demo-img img { height: 96px; }
+  .new-layout .demo-blurb { display: none; }
+  .hero .hero-actions { display: none; }
+  .hero { padding-top: 12px; padding-bottom: 12px; }
+  .hero h1 { font-size: 26px; margin-bottom: 4px; }
+  .hero p { font-size: 15px; margin: 0; }
+  .new-layout h2 { margin-top: 0; }
+  .new-layout .card > .help { margin-top: 4px; }
+}
+@media (min-width: 1100px) { .new-layout .demos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+#demoSection { scroll-margin-top: 76px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.demos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.demo {
+  display: block;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  overflow: hidden;
+  color: var(--ink);
+  text-decoration: none;
+}
+.demo:hover, .demo:focus-visible { outline: 2px solid var(--brand); }
+.demo-img { position: relative; }
+.demo-img img { width: 100%; height: 130px; object-fit: cover; display: block; }
+.demo-kind {
+  position: absolute; top: 8px; left: 8px;
+  font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+  background: rgba(0,0,0,.65); color: #fff;
+}
+.demo-body { padding: 10px; display: grid; gap: 4px; }
+.demo-counts { font-size: 12px; font-weight: 600; }
+.demo-check { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.demo-blurb { font-size: 12px; color: var(--ink-2); }
+.sample {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink);
+}
+.sample img {
+  width: 100%;
+  height: 90px;
+  object-fit: cover;
+  display: block;
+}
+.sample span {
+  display: block;
+  font-size: 12px;
+  padding: 8px;
+}
+.sample.selected {
+  outline: 2px solid var(--brand);
+}
+#map {
+  height: 420px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+.compare-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+.compare-col {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  background: var(--surface);
+}
+.compare-col h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+.compare-col.fixed {
+  border-top: 4px solid var(--risk-low);
+}
+.compare-col.risky {
+  border-top: 4px solid var(--risk-high);
+}
+.compare-col.new {
+  border-top: 4px solid var(--risk-med);
+}
+.compare-col.notseen {
+  border-top: 4px solid var(--notseen);
+}
+.order-skel { display: flex; gap: 12px; align-items: flex-start; }
+.skeleton.skel-thumb { width: 120px; height: 90px; min-height: 0; flex: none; }
+.skel-body { flex: 1; display: grid; gap: 10px; }
+.skeleton.skel-line { height: 14px; min-height: 0; width: 100%; }
+.skeleton.skel-line.short { width: 25%; }
+.skeleton.skel-line.mid { width: 60%; }
+.skeleton.skel-scan-thumb { width: 96px; aspect-ratio: 4 / 3; min-height: 0; flex: none; }
+.skeleton.skel-line.chips-skel { width: 40%; height: 22px; border-radius: 999px; }
+.scan-skel .skel-body { flex: 1; }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+.skeleton {
+  background: linear-gradient(90deg, var(--line) 25%, var(--surface-2) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: var(--radius-sm);
+  min-height: 60px;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.empty {
+  text-align: center;
+  color: var(--ink-2);
+  padding: 32px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--line);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  vertical-align: middle;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / .8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+.lightbox.open {
+  display: flex;
+}
+.lightbox img {
+  max-width: 95vw;
+  max-height: 90vh;
+  border-radius: var(--radius);
+}
+.order-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--surface);
+}
+.toggle-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.toggle-row button {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.toggle-row button.active {
+  background: var(--brand);
+  color: #fff;
+  border-color: var(--brand);
+}
+.disclosure {
+  font-size: 12px;
+  color: var(--ink-2);
+  margin-top: 16px;
+}
+footer {
+  text-align: center;
+  color: var(--ink-2);
+  font-size: 12px;
+  padding: 24px;
+}
+.video-wrap video, .video-wrap img {
+  width: 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: #000;
+}
+@media (max-width: 600px) {
+  .hero h1 {
+    font-size: 22px;
+  }
+  main {
+    padding: 16px 12px 48px;
+  }
+}
+@media print {
+  .topbar, .nav, .banner, .btn, .toggle-row, footer, #map {
+    display: none !important;
+  }
+  main {
+    max-width: none;
+  }
+  .card, .order-card {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}
+
+.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+.scan-row { display:flex; align-items:center; gap:14px; padding:12px; border:1px solid var(--line); border-radius:var(--radius); margin:10px 0; color:var(--ink); text-decoration:none; min-width:0; }
+.scan-row img, .scan-placeholder { width:96px; aspect-ratio:4/3; object-fit:cover; border-radius:6px; background:var(--surface-2); flex:none; }
+.scan-placeholder { display:grid; place-items:center; font-size:28px; } .scan-row-body, .order-body { min-width:0; overflow-wrap:anywhere; } .muted { opacity:.65; }
+.chips, .map-legend { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; } .legend-high { color:var(--risk-high); } .legend-medium { color:var(--risk-med); } .legend-review { color:var(--risk-review); } .legend-low { color:var(--risk-low); }
+.order-layout { display:flex; align-items:flex-start; gap:12px; } .order-check { display:flex; align-items:center; flex:none; } .order-check input { width:20px; height:20px; min-height:20px; margin:0; } .order-image { width:120px; aspect-ratio:4/3; object-fit:cover; border-radius:6px; flex:none; } .order-body h3 { margin:8px 0 2px; } .why-button { background:transparent; color:var(--brand); border:0; padding:8px 0; cursor:pointer; font:inherit; text-decoration:underline; } .rule-label { display:block; color:var(--ink-2); }
+.how-step { margin-bottom:18px; } .how-step p { margin:4px 0; } .table-scroll { max-width:100%; overflow-x:auto; } .eval-table { min-width:850px; } .eval-table, .rules-table { border-collapse:collapse; } .eval-table th, .eval-table td, .rules-table td { padding:8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; } .rules-table td:first-child { white-space:nowrap; font-weight:700; }
+@media (max-width:600px) { .order-image { width:80px; } .scan-row img, .scan-placeholder { width:72px; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
+</style>
+<script>try{if(localStorage.getItem("sw-theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}</script>
+</head>
+<body>
+<header class="topbar">
+<div class="topbar-inner">
+<a class="logo" href="#/new" aria-label="StillWater home">
+<svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+<path d="M12 2C12 2 5 11 5 15a7 7 0 0 0 14 0C19 11 12 2 12 2Z" fill="#0e7490"/>
+<path d="M9 15a3 3 0 0 0 3 3" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+</svg>
+<span>StillWater</span>
+</a>
+<nav class="nav" aria-label="Primary">
+<a href="#/new" data-route="new">New scan</a>
+<a href="#/scans" data-route="scans">Scans</a>
+<a href="#/map" data-route="map">Map</a>
+<a href="#/orders" data-route="orders">Work orders</a>
+<a href="#/how" data-route="how">How it works</a>
+</nav>
+<span class="status-pill off" id="healthPill" role="status">checking…</span>
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="Switch to dark theme" aria-pressed="false" title="Toggle light / dark theme">
+<svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+<svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
+</button>
+</div>
+</header>
+<div class="banner" id="scanBanner" hidden>Scanning is unavailable. You can browse past scans.</div>
+<main id="app" aria-live="polite"></main>
+<div class="lightbox" id="lightbox" role="dialog" aria-label="Zoomed evidence image">
+<img id="lightboxImg" alt="Zoomed annotated result">
+</div>
+<footer>AI estimate, check on site. People are blurred automatically. Check before sharing.</footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function () {
+  "use strict";
+  var app = document.getElementById("app");
+  var healthPill = document.getElementById("healthPill");
+  var scanBanner = document.getElementById("scanBanner");
+  var lightbox = document.getElementById("lightbox");
+  var lightboxImg = document.getElementById("lightboxImg");
+  var scanningAvailable = false;
+  var lang = "en";
+  var state = { file: null, fileUrl: null, sampleName: "", area: "", lat: null, lng: null };
+  var pollTimer = null;
+  var evtSource = null;
+  var elapsedTimer = null;
+  var elapsedSec = 0;
+  var SAMPLES = ["puddle.jpg", "street-puddle.jpg", "rooftop-pots.jpg", "wet-basin.jpg", "bin-with-trash.jpg", "drain-grate.jpg"];
+  var STEPS7 = ["ingest", "privacy", "scout", "track", "verify", "decide", "act"];
+  var STEP_LABEL = { ingest: "Ingest", privacy: "Privacy", scout: "Scout", track: "Track", verify: "Verify", decide: "Decide", act: "Orders" };
+  var IMAGE_STEPS = ["privacy", "scout", "verify", "decide"];
+  function t(bn, en) {
+    return lang === "bn" ? bn : en;
+  }
+  function clearTimers() {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+    if (elapsedTimer) {
+      clearInterval(elapsedTimer);
+      elapsedTimer = null;
+    }
+    if (evtSource) {
+      try {
+        evtSource.close();
+      } catch (e) {}
+      evtSource = null;
+    }
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) {
+      n.className = cls;
+    }
+    if (text !== undefined && text !== null) {
+      n.textContent = text;
+    }
+    return n;
+  }
+  function fmtSize(b) {
+    if (b < 1024) {
+      return b + " B";
+    }
+    if (b < 1048576) {
+      return (b / 1024).toFixed(1) + " KB";
+    }
+    return (b / 1048576).toFixed(1) + " MB";
+  }
+  function fmtTime(s) {
+    var m = Math.floor(s / 60);
+    var r = Math.floor(s % 60);
+    return m + ":" + (r < 10 ? "0" + r : r);
+  }
+  function fmtCost(v) {
+    if (v === undefined || v === null || v === "") {
+      return "—";
+    }
+    var n = Number(v);
+    if (!isFinite(n)) {
+      return "—";
+    }
+    if (n <= 0) {
+      return "$0.00";
+    }
+    if (n < 0.01) {
+      return "<$0.01";
+    }
+    return "$" + n.toFixed(2);
+  }
+  function annotatedAvailable(man) {
+    if (!man || typeof man !== "object") {
+      return false;
+    }
+    var keys = ["has_annotated_media", "annotated_exists", "has_annotated", "annotated_available", "annotated", "has_annotated_image", "has_annotated_video", "annotated_media"];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (man[k] === true) {
+        return true;
+      }
+      if (man[k] === false) {
+        return false;
+      }
+    }
+    if (typeof man.annotated_url === "string") {
+      return man.annotated_url.length > 0;
+    }
+    if (typeof man.annotated_path === "string") {
+      return man.annotated_path.length > 0;
+    }
+    var conts = man.containers || [];
+    return conts.length > 0;
+  }
+  var RISK_RANK = { high: 0, medium: 1, review: 2, low: 3, fixed: 3 };
+  function sortedByRisk(conts) {
+    return conts.map(function (cc, i) { return { cc: cc, i: i }; }).sort(function (a, b) {
+      var ra = RISK_RANK[riskClass(a.cc)], rb = RISK_RANK[riskClass(b.cc)];
+      return (ra === undefined ? 2 : ra) - (rb === undefined ? 2 : rb) || a.i - b.i;
+    });
+  }
+  function riskClass(c) {
+    var r = String(c.risk || c.worst || "review").toLowerCase();
+    if (r.indexOf("high") >= 0) {
+      return "high";
+    }
+    if (r.indexOf("med") >= 0) {
+      return "medium";
+    }
+    if (r.indexOf("low") >= 0 || r.indexOf("fix") >= 0) {
+      return "low";
+    }
+    return "review";
+  }
+  function riskIcon(cls) {
+    if (cls === "high") {
+      return "▲ ";
+    }
+    if (cls === "medium") {
+      return "● ";
+    }
+    if (cls === "low") {
+      return "✔ ";
+    }
+    return "◆ ";
+  }
+  async function checkHealth() {
+    try {
+      var r = await fetch("/api/health");
+      var j = await r.json();
+      scanningAvailable = j.scanning_available === true;
+    } catch (e) {
+      scanningAvailable = false;
+    }
+    healthPill.textContent = scanningAvailable ? "System ready" : "Scanning unavailable";
+    healthPill.className = "status-pill " + (scanningAvailable ? "ok" : "off");
+    scanBanner.hidden = scanningAvailable;
+  }
+  function setNav(route) {
+    var links = document.querySelectorAll(".nav a");
+    links.forEach(function (a) {
+      if (a.getAttribute("data-route") === route) {
+        a.classList.add("active");
+      } else {
+        a.classList.remove("active");
+      }
+    });
+  }
+  function router() {
+    clearTimers();
+    var h = location.hash || "#/new";
+    var parts = h.replace("#/", "").split("/");
+    if (parts[0] === "new" || parts[0] === "") {
+      setNav("new");
+      renderNew();
+    } else if (parts[0] === "scans" && !parts[1]) {
+      setNav("scans");
+      renderScans();
+    } else if (parts[0] === "scan" && parts[1] && parts[2] === "compare") {
+      setNav("scans");
+      renderCompare(parts[1]);
+    } else if (parts[0] === "scan" && parts[1]) {
+      setNav("scans");
+      renderScan(parts[1]);
+    } else if (parts[0] === "map") {
+      setNav("map");
+      renderMap();
+    } else if (parts[0] === "orders") {
+      setNav("orders");
+      renderOrders();
+    } else if (parts[0] === "how") {
+      setNav("how");
+      renderHow();
+    } else {
+      setNav("new");
+      renderNew();
+    }
+  }
+  function heroCard() {
+    var d = el("div", "card hero");
+    var h = el("h1", null, "Find the still water before the mosquitoes do.");
+    var p = el("p", null, "Point your phone at buckets, tyres, pots or drums. StillWater finds water-holding containers and writes a bilingual cleanup work order with photo evidence.");
+    d.appendChild(h);
+    d.appendChild(p);
+    var row = el("div", "hero-actions");
+    var scanBtn = el("button", "btn", "Scan a photo or video");
+    scanBtn.type = "button";
+    scanBtn.addEventListener("click", openUpload);
+    row.appendChild(scanBtn); d.appendChild(row);
+    return d;
+  }
+  function openUpload() {
+    var fi = document.querySelector("#dropzone input[type=file]");
+    if (fi) { fi.click(); }
+  }
+  var reviewHint = "The two AI checks disagreed or were unsure, so a person should look.";
+  function renderNew() {
+    app.textContent = "";
+    app.appendChild(heroCard());
+    var c = el("div", "card");
+    c.appendChild(el("h2", null, "One-click demos"));
+    c.appendChild(el("p", "help", "Real scans from Dhaka, recorded Nov 3. Tap one to see the full result instantly: evidence photos, risk levels and bilingual work orders."));
+    var gal = el("div", "demos");
+    c.appendChild(gal);
+    fetch("/samples/demos.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : []; }).then(function (list) {
+      list.forEach(function (d) {
+        var a = el("a", "demo");
+        a.href = "#/scan/" + encodeURIComponent(d.scan_id);
+        if (d.counts && d.counts.review) a.title = reviewHint;
+        a.setAttribute("aria-label", d.title + " (" + d.kind + "), open result");
+        var wrap = el("div", "demo-img");
+        var img = document.createElement("img");
+        img.loading = "lazy"; img.alt = ""; img.src = "/samples/" + d.thumb;
+        wrap.appendChild(img);
+        wrap.appendChild(el("span", "demo-kind " + d.kind, d.kind === "video" ? "Video" : "Photo"));
+        a.appendChild(wrap);
+        var body = el("div", "demo-body");
+        body.appendChild(el("strong", null, d.title));
+        var k = d.counts || {}, total = (k.high || 0) + (k.medium || 0) + (k.review || 0) + (k.low || 0);
+        var line = el("span", "demo-counts");
+        if (!total) { line.textContent = "No containers found"; }
+        else {
+          line.appendChild(el("b", null, total + " found: "));
+          var parts = [];
+          if (k.high) parts.push(k.high + " high");
+          if (k.medium) parts.push(k.medium + " medium");
+          if (k.low) parts.push(k.low + " low");
+          line.appendChild(document.createTextNode(parts.join(" · ")));
+          if (k.review) {
+            if (parts.length) { line.appendChild(document.createTextNode(" · ")); }
+            var chk = el("span", "demo-check", k.review + " need a check");
+            chk.title = reviewHint;
+            line.appendChild(chk);
+          }
+        }
+        body.appendChild(line);
+        body.appendChild(el("span", "demo-blurb", d.blurb));
+        a.appendChild(body);
+        gal.appendChild(a);
+      });
+    }).catch(function () {});
+    c.id = "demoSection";
+    var u = el("div", "card");
+    u.appendChild(el("h2", null, "New scan — photo or video"));
+    var dz = el("div", "dropzone");
+    dz.id = "dropzone";
+    dz.tabIndex = 0;
+    dz.setAttribute("role", "button");
+    dz.setAttribute("aria-label", "Upload a photo or video. Activate to browse files.");
+    var dzTitle = el("strong", null, "Drag and drop a photo or video here, click to browse, or paste an image (Ctrl+V)");
+    var dzSub = el("div", "help", "Photos JPG/PNG/WebP up to 15 MB · Videos MP4/MOV/WebM up to 200 MB, 60 s");
+    dz.appendChild(dzTitle);
+    dz.appendChild(dzSub);
+    var fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*,video/*";
+    fileInput.hidden = true;
+    fileInput.setAttribute("aria-label", "Choose a photo or video file");
+    dz.appendChild(fileInput);
+    var prev = el("div", "preview");
+    prev.id = "previewBox";
+    dz.appendChild(prev);
+    u.appendChild(dz);
+    var msg = el("p", "error", "");
+    msg.id = "fileMsg";
+    msg.setAttribute("aria-live", "assertive");
+    u.appendChild(msg);
+    var bar = el("div", "progress-bar");
+    bar.hidden = true;
+    bar.id = "upBar";
+    var fill = el("span");
+    bar.appendChild(fill);
+    u.appendChild(bar);
+    var f1 = el("div", "field");
+    var lab = el("label", null, "Area label");
+    lab.htmlFor = "areaInput";
+    var areaIn = document.createElement("input");
+    areaIn.type = "text";
+    areaIn.id = "areaInput";
+    areaIn.maxLength = 200;
+    areaIn.placeholder = "e.g. Mirpur Block C, rooftop";
+    areaIn.value = state.area || "";
+    areaIn.addEventListener("input", function () {
+      state.area = areaIn.value;
+    });
+    f1.appendChild(lab);
+    f1.appendChild(areaIn);
+    u.appendChild(f1);
+    var locRow = el("div", null, "");
+    var locBtn = el("button", "btn btn-secondary", "Use my location");
+    locBtn.type = "button";
+    var locMsg = el("span", "help", state.lat !== null ? "Location set." : " Location optional.");
+    locMsg.style.marginLeft = "8px";
+    locBtn.addEventListener("click", function () {
+      if (!navigator.geolocation) {
+        locMsg.textContent = " Geolocation is not available.";
+        return;
+      }
+      locMsg.textContent = " Locating…";
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        state.lat = pos.coords.latitude;
+        state.lng = pos.coords.longitude;
+        locMsg.textContent = " Location set (" + state.lat.toFixed(3) + ", " + state.lng.toFixed(3) + ").";
+      }, function () {
+        locMsg.textContent = " Could not get location. Continuing without it.";
+      });
+    });
+    locRow.appendChild(locBtn);
+    locRow.appendChild(locMsg);
+    u.appendChild(locRow);
+    var start = el("button", "btn", "Start scan");
+    start.id = "startBtn";
+    start.style.marginTop = "16px";
+    start.disabled = true;
+    start.addEventListener("click", startUpload);
+    u.appendChild(start);
+    var layout = el("div", "new-layout");
+    layout.appendChild(c);
+    layout.appendChild(u);
+    app.appendChild(layout);
+    renderPreview();
+    dz.addEventListener("click", function (e) {
+      if (e.target !== fileInput) {
+        fileInput.click();
+      }
+    });
+    dz.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+    dz.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      dz.classList.add("drag");
+    });
+    dz.addEventListener("dragleave", function () {
+      dz.classList.remove("drag");
+    });
+    dz.addEventListener("drop", function (e) {
+      e.preventDefault();
+      dz.classList.remove("drag");
+      if (e.dataTransfer.files.length) {
+        pickFile(e.dataTransfer.files[0]);
+      }
+    });
+    fileInput.addEventListener("change", function () {
+      if (fileInput.files.length) {
+        pickFile(fileInput.files[0]);
+      }
+    });
+    document.addEventListener("paste", handlePaste);
+  }
+  function handlePaste(e) {
+    if (!document.getElementById("previewBox")) {
+      return;
+    }
+    var items = (e.clipboardData && e.clipboardData.files) || [];
+    if (items.length) {
+      pickFile(items[0]);
+    }
+  }
+  function pickFile(f) {
+    var msg = document.getElementById("fileMsg");
+    var name = f.name || "pasted-image.png";
+    var ext = name.split(".").pop().toLowerCase();
+    var isImg = /image/.test(f.type) || ["jpg", "jpeg", "png", "webp"].indexOf(ext) >= 0;
+    var isVid = /video/.test(f.type) || ["mp4", "mov", "webm"].indexOf(ext) >= 0;
+    if (!isImg && !isVid) {
+      if (msg) {
+        msg.textContent = "That file type is not supported. Use a JPG, PNG, WebP photo or an MP4, MOV, WebM video.";
+      }
+      return;
+    }
+    var limit = isImg ? 15 * 1048576 : 200 * 1048576;
+    if (f.size > limit) {
+      if (msg) {
+        msg.textContent = "That file is " + fmtSize(f.size) + "; " + (isImg ? "photos can be up to 15 MB." : "videos can be up to 200 MB.");
+      }
+      return;
+    }
+    if (isVid && msg) {
+      msg.textContent = "";
+    } else if (msg) {
+      msg.textContent = "";
+    }
+    if (state.fileUrl) {
+      try {
+        URL.revokeObjectURL(state.fileUrl);
+      } catch (e) {}
+    }
+    state.file = f;
+    state.fileUrl = URL.createObjectURL(f);
+    state.sampleName = "";
+    if (!state.area) {
+      state.area = name.replace(/\.[^.]+$/, "").replace(/[-_]+/g, " ");
+      var ai = document.getElementById("areaInput");
+      if (ai) {
+        ai.value = state.area;
+      }
+    }
+    renderPreview();
+  }
+  async function selectSample(name, btn) {
+    document.querySelectorAll(".sample").forEach(function (b) {
+      b.classList.remove("selected");
+    });
+    if (btn) {
+      btn.classList.add("selected");
+    }
+    try {
+      var r = await fetch("/samples/" + name);
+      var b = await r.blob();
+      var f = new File([b], name, { type: "image/jpeg" });
+      if (state.fileUrl) {
+        try {
+          URL.revokeObjectURL(state.fileUrl);
+        } catch (e) {}
+      }
+      state.file = f;
+      state.fileUrl = URL.createObjectURL(f);
+      state.sampleName = name;
+      state.area = name.replace(".jpg", "").replace(/-/g, " ");
+      var ai = document.getElementById("areaInput");
+      if (ai) {
+        ai.value = state.area;
+      }
+      var go = document.getElementById("sampleGo");
+      if (go) {
+        go.disabled = false;
+      }
+      renderPreview();
+    } catch (e) {
+      var msg = document.getElementById("fileMsg");
+      if (msg) {
+        msg.textContent = "Could not load that sample. Please try another.";
+      }
+    }
+  }
+  function renderPreview() {
+    var box = document.getElementById("previewBox");
+    var start = document.getElementById("startBtn");
+    if (!box) {
+      return;
+    }
+    box.textContent = "";
+    if (!state.file) {
+      if (start) {
+        start.disabled = true;
+      }
+      return;
+    }
+    var isVid = /video/.test(state.file.type) || /\.(mp4|mov|webm)$/i.test(state.file.name);
+    var media;
+    if (isVid) {
+      media = document.createElement("video");
+      media.src = state.fileUrl;
+      media.controls = true;
+      media.muted = true;
+      media.preload = "metadata";
+      media.addEventListener("loadedmetadata", function () {
+        dur.textContent = fmtSize(state.file.size) + " · " + fmtTime(media.duration || 0) + " · " + state.file.name;
+      });
+    } else {
+      media = document.createElement("img");
+      media.src = state.fileUrl;
+      media.alt = "Selected photo preview";
+    }
+    box.appendChild(media);
+    var meta = el("div", null, "");
+    var nm = el("div", null, state.file.name + " · " + fmtSize(state.file.size));
+    var dur = el("div", "help", fmtSize(state.file.size));
+    meta.appendChild(nm);
+    meta.appendChild(dur);
+    var rm = el("button", "btn btn-secondary", "Remove");
+    rm.type = "button";
+    rm.addEventListener("click", function (ev) {
+      ev.stopPropagation();
+      if (state.fileUrl) {
+        try {
+          URL.revokeObjectURL(state.fileUrl);
+        } catch (e) {}
+      }
+      state.file = null;
+      state.fileUrl = null;
+      state.sampleName = "";
+      renderPreview();
+      var go = document.getElementById("sampleGo");
+      if (go) {
+        go.disabled = true;
+      }
+    });
+    meta.appendChild(rm);
+    box.appendChild(meta);
+    if (start) {
+      start.disabled = false;
+    }
+  }
+  function startUpload() {
+    if (!state.file) {
+      return;
+    }
+    if (!state.area || !state.area.trim()) {
+      var m = document.getElementById("fileMsg");
+      if (m) {
+        m.textContent = "Please add an area label (e.g. street or rooftop name).";
+      }
+      return;
+    }
+    if (!scanningAvailable) {
+      var m2 = document.getElementById("fileMsg");
+      if (m2) {
+        m2.textContent = "Scanning is offline right now. Please try again later.";
+      }
+      return;
+    }
+    var btn = document.getElementById("startBtn") || document.getElementById("sampleGo");
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = "";
+      var sp = el("span", "spinner");
+      btn.appendChild(sp);
+      btn.appendChild(el("span", null, " Uploading…"));
+    }
+    var bar = document.getElementById("upBar");
+    if (bar) {
+      bar.hidden = false;
+    }
+    var xhr = new XMLHttpRequest();
+    var fname = encodeURIComponent(state.file.name || "upload.jpg");
+    var url = "/api/scans?area=" + encodeURIComponent(state.area.trim()) + "&filename=" + fname + "&background=true";
+    if (state.lat !== null && state.lng !== null) {
+      url += "&lat=" + state.lat + "&lng=" + state.lng;
+    }
+    xhr.open("POST", url, true);
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.upload.onprogress = function (e) {
+      if (e.lengthComputable && bar) {
+        bar.firstChild.style.width = Math.round(e.loaded / e.total * 100) + "%";
+      }
+    };
+    xhr.onload = function () {
+      try {
+        var j = JSON.parse(xhr.responseText || "{}");
+        if (xhr.status === 202 && j.scan_id) {
+          location.hash = "#/scan/" + j.scan_id;
+        } else {
+          var err = new Error("bad");
+          err.status = xhr.status;
+          err.detail = (j && typeof j.detail === "string") ? j.detail : "";
+          err.retry = parseInt(xhr.getResponseHeader("Retry-After") || "0", 10);
+          throw err;
+        }
+      } catch (e) {
+        var m3 = document.getElementById("fileMsg");
+        if (m3) {
+          var msg = "We could not start this scan. Please try again or use a different file.";
+          if (e && e.status === 429) {
+            msg = "Scan limit reached or a scan is already running." + (e.retry > 0 ? " Try again in about " + Math.max(1, Math.ceil(e.retry / 60)) + " min." : " Please wait a moment and try again.");
+          } else if (e && e.status === 503) {
+            msg = "Scanning is temporarily unavailable. Please try again shortly.";
+          } else if (e && (e.status === 400 || e.status === 413) && e.detail) {
+            msg = e.detail;
+          }
+          m3.textContent = msg;
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = "Start scan";
+        }
+      }
+    };
+    xhr.onerror = function () {
+      var m4 = document.getElementById("fileMsg");
+      if (m4) {
+        m4.textContent = "We could not start this scan. Please check your connection and retry.";
+      }
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Start scan";
+      }
+    };
+    xhr.send(state.file);
+  }
+  function scanSkeleton() {
+    var d = el("div", "scan-row scan-skel");
+    d.setAttribute("aria-hidden", "true");
+    d.appendChild(el("div", "skeleton skel-scan-thumb"));
+    var b = el("div", "scan-row-body skel-body");
+    ["skel-line mid", "skel-line short", "skel-line chips-skel"].forEach(function (cl) { b.appendChild(el("div", "skeleton " + cl)); });
+    d.appendChild(b);
+    return d;
+  }
+  async function renderScans() {
+    app.textContent = "";
+    var c = el("div", "card");
+    c.appendChild(el("h2", null, "Scans"));
+    var list = el("div", null, "");
+    for (var k = 0; k < 6; k++) { list.appendChild(scanSkeleton()); }
+    c.appendChild(list);
+    app.appendChild(c);
+    try {
+      var r = await fetch("/api/scans?limit=50");
+      var j = await r.json();
+      list.textContent = "";
+      var scans = j.scans || [];
+      if (!scans.length) {
+        var emp = el("div", "empty", "No scans yet. Start your first scan — a closer photo of buckets, tyres or pots works best.");
+        var b = el("button", "btn", "Start a scan");
+        b.addEventListener("click", function () {
+          location.hash = "#/new";
+        });
+        list.appendChild(emp);
+        list.appendChild(b);
+        return;
+      }
+      function row(s) {
+        var a = el("a", "scan-row" + (s.status === "failed" ? " muted" : ""));
+        a.href = "#/scan/" + encodeURIComponent(s.id);
+        if (s.thumb) { var img = document.createElement("img"); img.loading = "lazy"; img.decoding = "async"; img.src = s.thumb; img.alt = "Scan evidence"; a.appendChild(img); }
+        else a.appendChild(el("span", "scan-placeholder", "▧"));
+        var body = el("div", "scan-row-body");
+        body.appendChild(el("strong", null, areaLabel(s.area)));
+        body.appendChild(el("div", "help", (s.media_type === "image" ? "Photo" : "Video") + " · " + formatDate(s.created_at, true)));
+        var chips = el("div", "chips");
+        if (s.status === "complete") addCounts(chips, s.summary);
+        else chips.appendChild(el("span", "badge", s.status === "failed" ? "Failed" : "Scanning"));
+        body.appendChild(chips); a.appendChild(body); return a;
+      }
+      scans.filter(function (s) { return s.status !== "failed"; }).forEach(function (s) { list.appendChild(row(s)); });
+      var failed = scans.filter(function (s) { return s.status === "failed"; });
+      if (failed.length) {
+        var toggle = el("button", "btn btn-secondary", "Show failed scans (" + failed.length + ")");
+        var group = el("div"); group.hidden = true; toggle.setAttribute("aria-expanded", "false");
+        failed.forEach(function (s) { group.appendChild(row(s)); });
+        toggle.addEventListener("click", function () { group.hidden = !group.hidden; toggle.setAttribute("aria-expanded", String(!group.hidden)); toggle.textContent = (group.hidden ? "Show" : "Hide") + " failed scans (" + failed.length + ")"; });
+        list.appendChild(toggle); list.appendChild(group);
+      }
+    } catch (e) {
+      list.textContent = "";
+      list.appendChild(el("div", "empty", "Could not load scans. Please reload."));
+    }
+  }
+  async function renderScan(id) {
+    app.textContent = "";
+    var c = el("div", "card");
+    c.appendChild(el("h2", null, "Scan in progress"));
+    c.appendChild(el("div", "help", "ID: " + id));
+    var head = el("div", "scan-progress-head");
+    var stageLine = el("p", null, "Preparing scan");
+    var percentLine = el("strong", null, "0%");
+    head.appendChild(stageLine); head.appendChild(percentLine); c.appendChild(head);
+    var bar = el("div", "scan-progress-bar");
+    bar.setAttribute("role", "progressbar"); bar.setAttribute("aria-label", "Scan progress");
+    bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100"); bar.setAttribute("aria-valuenow", "0");
+    var fill = el("span"); bar.appendChild(fill); c.appendChild(bar);
+    var unknown = el("div", "stage-unknown"); unknown.setAttribute("aria-hidden", "true"); c.appendChild(unknown);
+    var timerLine = el("p", "help", "Elapsed 0:00 · estimating…"); c.appendChild(timerLine);
+    var announcement = el("div", "sr-only"); announcement.setAttribute("aria-live", "polite"); c.appendChild(announcement);
+    var stepBox = el("div"); c.appendChild(stepBox);
+    var msgBox = el("div"); c.appendChild(msgBox);
+    var back = el("button", "btn btn-secondary", "Cancel / back");
+    back.addEventListener("click", function () { clearTimers(); location.hash = "#/new"; });
+    c.appendChild(back); app.appendChild(c);
+
+    var weights = { video: [2, 18, 3, 45, 24, 4, 4], image: [5, 15, 15, 30, 25, 5, 5] };
+    var labels = { ingest: "Preparing media", privacy: "Hiding people", scout: "Surveying the scene", track: "Finding containers", verify: "Two AI witnesses checking", decide: "Assessing results", act: "Preparing results" };
+    var mediaType = "video", durationSec = null, active = "ingest", doneSet = new Set();
+    var started = Date.now(), stageStarted = started, lastEvent = started, stageTimes = {}, counter = null;
+    var smoothedTotal = null, initialEstimate = null, finished = false, polling = false;
+    function seconds() { return (Date.now() - started) / 1000; }
+    function stageSeconds() { return Math.max(0, (Date.now() - stageStarted) / 1000); }
+    function prior() { return mediaType === "image" ? 30 : (durationSec === null ? 120 : 45 + 9 * durationSec); }
+    function fraction() {
+      if (counter) return Math.max(0, Math.min(1, counter.done / counter.total));
+      var expected = Math.max(1, prior() * weights[mediaType][STEPS7.indexOf(active)] / 100);
+      return .9 * (1 - Math.exp(-stageSeconds() / expected));
+    }
+    function completedWeight() {
+      return STEPS7.reduce(function (sum, stage, i) { return sum + (doneSet.has(stage) ? weights[mediaType][i] : 0); }, 0);
+    }
+    function counterText() {
+      if (!counter) return "";
+      var unit = counter.unit === "frames" ? "frame " + counter.done + " of " + counter.total : counter.done + " of " + counter.total + " " + (counter.unit === "concepts" ? "object types" : counter.unit === "containers" ? "containers" : "");
+      return ": " + unit.trim();
+    }
+    function range(sec) {
+      if (sec < 20) return "about " + Math.max(1, Math.ceil(sec / 5) * 5) + " sec left";
+      if (sec < 60) return "about " + Math.max(10, Math.floor(sec / 10) * 10) + "-" + Math.ceil(sec / 10) * 10 + " sec left";
+      var lower = Math.max(1, Math.floor(sec / 60));
+      return "about " + lower + "-" + (lower + 1) + " min left";
+    }
+    function paintSteps() {
+      stepBox.textContent = "";
+      var steps = mediaType === "image" ? IMAGE_STEPS : STEPS7;
+      var imageGroups = { privacy: ["ingest", "privacy"], scout: ["scout", "track"], verify: ["verify"], decide: ["decide", "act"] };
+      var ul = el("ol", "scan-steps");
+      steps.forEach(function (step, i) {
+        var group = mediaType === "image" ? imageGroups[step] : [step];
+        var isDone = group.every(function (s) { return doneSet.has(s); });
+        var isActive = group.indexOf(active) !== -1 && !isDone;
+        var li = el("li", isDone ? "done" : isActive ? "active" : "pending");
+        li.appendChild(el("span", "step-mark", isDone ? "✓" : String(i + 1)));
+        li.appendChild(el("span", null, labels[step]));
+        if (isDone) {
+          var duration = group.reduce(function (sum, s) { return sum + (stageTimes[s] || 0); }, 0);
+          if (duration > 0) li.appendChild(el("span", "step-time", fmtTime(duration)));
+        }
+        if (isActive) li.setAttribute("aria-current", "step");
+        ul.appendChild(li);
+      });
+      stepBox.appendChild(ul);
+    }
+    function paint() {
+      if (finished) return;
+      var elapsed = seconds(), f = fraction(), completed = completedWeight(), idx = STEPS7.indexOf(active);
+      var currentWeight = idx < 0 || doneSet.has(active) ? 0 : weights[mediaType][idx];
+      var progress = Math.min(99, completed + currentWeight * f);
+      fill.style.width = progress + "%"; percentLine.textContent = Math.floor(progress) + "%";
+      bar.setAttribute("aria-valuenow", String(Math.floor(progress)));
+      stageLine.textContent = (labels[active] || "Preparing scan") + counterText();
+      unknown.hidden = !!counter || doneSet.has(active);
+      var laterWeight = STEPS7.reduce(function (sum, stage, i) { return sum + (i > idx && !doneSet.has(stage) ? weights[mediaType][i] : 0); }, 0);
+      var work = completed + currentWeight * f;
+      var laterRateEstimate = work > 0 ? laterWeight * elapsed / work : laterWeight * prior() / 100;
+      var currentRemaining = (counter && (f >= .1 || stageSeconds() >= 3) && counter.done > 0) ? stageSeconds() * (1 - f) / f : currentWeight * prior() / 100 * (1 - f);
+      var confidence = Math.min(1, work / 25);
+      var remaining = currentRemaining + confidence * laterRateEstimate + (1 - confidence) * laterWeight * prior() / 100;
+      var totalEstimate = elapsed + remaining;
+      smoothedTotal = smoothedTotal === null ? totalEstimate : .85 * smoothedTotal + .15 * totalEstimate;
+      if (initialEstimate === null && (mediaType === "image" || durationSec !== null)) initialEstimate = prior();
+      var estimate = initialEstimate !== null && elapsed > initialEstimate ? "Taking longer than usual - still working" : range(Math.max(0, smoothedTotal - elapsed));
+      timerLine.textContent = "Elapsed " + fmtTime(elapsed) + " · " + estimate;
+      paintSteps();
+    }
+    function fail() {
+      if (finished) return;
+      finished = true; clearTimers(); msgBox.textContent = "";
+      msgBox.appendChild(el("p", "error", "We could not finish this scan. Nothing was saved. Please try again or use a different file."));
+      var rb = el("button", "btn", "Retry with same file");
+      rb.addEventListener("click", function () { location.hash = "#/new"; }); msgBox.appendChild(rb);
+    }
+    async function finishOk() {
+      if (finished) return;
+      finished = true; clearTimers(); fill.style.width = "100%"; percentLine.textContent = "100%"; bar.setAttribute("aria-valuenow", "100");
+      try {
+        var r = await fetch("/api/scans/" + encodeURIComponent(id) + "/results");
+        if (!r.ok) throw new Error("Results unavailable");
+        var man = await r.json(); renderResults(id, man);
+      } catch (e) { finished = false; fail(); }
+    }
+    async function pollOnce() {
+      try {
+        var r = await fetch("/api/scans/" + encodeURIComponent(id));
+        if (!r.ok || finished) return;
+        var s = await r.json();
+        if (s.media_type === "image" || s.media_type === "video") mediaType = s.media_type;
+        if (typeof s.duration_seconds === "number" && isFinite(s.duration_seconds) && s.duration_seconds >= 0) durationSec = s.duration_seconds;
+        if (s.status === "complete") return finishOk();
+        if (s.status === "failed") return fail();
+        paint();
+      } catch (e) {}
+    }
+    function startPolling() {
+      if (polling || finished) return;
+      polling = true; pollOnce(); pollTimer = setInterval(pollOnce, 2000);
+    }
+    function setStage(stage) {
+      if (stage === active) return;
+      var oldIndex = STEPS7.indexOf(active), newIndex = STEPS7.indexOf(stage);
+      if (newIndex < 0 || newIndex < oldIndex) return;
+      if (!doneSet.has(active)) stageTimes[active] = stageSeconds();
+      for (var i = 0; i < newIndex; i++) doneSet.add(STEPS7[i]);
+      active = stage; stageStarted = Date.now(); counter = null;
+      announcement.textContent = labels[stage];
+    }
+    try {
+      evtSource = new EventSource("/api/scans/" + encodeURIComponent(id) + "/events");
+      function onStageEvent(ev) {
+        try {
+          var e = JSON.parse(ev.data), index = STEPS7.indexOf(e.stage);
+          if (index < 0 || finished) return;
+          lastEvent = Date.now();
+          if (e.kind === "error") return fail();
+          setStage(e.stage);
+          if (e.stage !== active) return;
+          if ((e.kind === "start" || e.kind === "progress") && typeof e.done === "number" && typeof e.total === "number" && e.done >= 0 && e.total > 0 && isFinite(e.done) && isFinite(e.total)) counter = { done: e.done, total: e.total, unit: e.unit };
+          if (e.kind === "done") { if (!doneSet.has(active)) stageTimes[active] = stageSeconds(); doneSet.add(active); counter = null; if (active === "act" || active === "decide") pollOnce(); }
+          paint();
+        } catch (e) {}
+      }
+      evtSource.addEventListener("stage", onStageEvent);
+      evtSource.onmessage = onStageEvent;
+      evtSource.addEventListener("gap", function () { startPolling(); });
+      evtSource.onerror = function () { try { evtSource.close(); } catch (e) {} startPolling(); };
+    } catch (e) { startPolling(); }
+    pollOnce(); paint();
+    elapsedTimer = setInterval(function () { if (Date.now() - lastEvent > 8000) startPolling(); paint(); }, 1000);
+  }
+  function summaryCards(man) {
+    var wrap = el("div", "stat-cards");
+    var conts = man.containers || [];
+    var high = conts.filter(function (x) {
+      return riskClass(x) === "high";
+    }).length;
+    var rev = conts.filter(function (x) {
+      return x.needs_review || riskClass(x) === "review";
+    }).length;
+    var stats = [
+      [String(conts.length), "containers"],
+      [String(high), "high"],
+      [String(rev), "needs review"],
+      [fmtCost(man.cost_usd), "cost"]
+    ];
+    stats.forEach(function (s) {
+      var d = el("div", "stat");
+      d.appendChild(el("b", null, s[0]));
+      d.appendChild(el("span", null, s[1]));
+      if (s[1] === "needs review") {
+        d.title = reviewHint;
+        var hint = el("small", "help", reviewHint); hint.id = "review-hint";
+        d.setAttribute("aria-describedby", hint.id); d.appendChild(hint);
+      }
+      wrap.appendChild(d);
+    });
+    return wrap;
+  }
+  function containerCard(idx, scanId, cc) {
+    var d = el("div", riskClass(cc) === "high" ? "card risk-high" : "card");
+    var img = document.createElement("img");
+    img.className = "thumb";
+    img.loading = "lazy";
+    img.alt = "Evidence for container " + (idx + 1);
+    img.src = "/api/scans/" + encodeURIComponent(scanId) + "/evidence/" + idx + "/crop";
+    img.onerror = function () {
+      img.src = "/api/scans/" + encodeURIComponent(scanId) + "/evidence/" + idx + "/frame";
+    };
+    d.appendChild(img);
+    var cls = riskClass(cc);
+    var badge = el("span", "badge " + cls, riskIcon(cls) + (cc.risk || cls));
+    badge.style.marginTop = "8px";
+    if (cls === "review") { badge.title = reviewHint; badge.setAttribute("aria-label", "Review. " + reviewHint); }
+    d.appendChild(badge);
+    var rule = el("p", "help", "");
+    rule.textContent = cc.concept || "Container";
+    d.appendChild(rule);
+    var ruleId = cc.rule_id || "";
+    var agreeText = "Witnesses agree";
+    var agreeClass = "low";
+    if (ruleId === "R8") {
+      agreeText = "One witness unsure";
+      agreeClass = "medium";
+    } else if (ruleId === "R0" || ruleId === "R1" || ruleId === "R7") {
+      agreeText = "Witnesses disagree or unsure";
+      agreeClass = "review";
+    }
+    var chip = el("span", "badge " + agreeClass, agreeText);
+    d.appendChild(chip);
+    if (cc.checks) {
+      var checks = cc.checks;
+      var toggle = el("button", "btn btn-secondary checks-toggle", "Two checks");
+      toggle.type = "button";
+      toggle.setAttribute("aria-expanded", "false");
+      var panel = el("div", "checks-panel");
+      panel.hidden = true;
+      panel.id = "checks-" + idx;
+      toggle.setAttribute("aria-controls", panel.id);
+      var headings = el("div", "checks-grid");
+      headings.appendChild(el("div", "checks-heading", checks.a.label));
+      headings.appendChild(el("div", "checks-heading", checks.b.label));
+      panel.appendChild(headings);
+      [["holds_water", "Holds water"], ["covered", "Covered"], ["water_visible", "Water visible"], ["exposed_to_rain", "Exposed to rain"]].forEach(function (field) {
+        var different = checks.a[field[0]] !== checks.b[field[0]];
+        var row = el("div", "checks-row" + (different ? " differ" : ""));
+        var title = el("div", "checks-row-title", field[1] + " ");
+        if (different) title.appendChild(el("span", "checks-differ", "differ"));
+        row.appendChild(title);
+        var values = el("div", "checks-grid");
+        [checks.a[field[0]], checks.b[field[0]]].forEach(function (value) {
+          var display = value === "yes" ? "✓ Yes" : value === "no" ? "✕ No" : "? Unsure";
+          values.appendChild(el("span", null, display));
+        });
+        row.appendChild(values); panel.appendChild(row);
+      });
+      var anyDiff = ["holds_water", "covered", "water_visible", "exposed_to_rain"].some(function (k) { return checks.a[k] !== checks.b[k]; });
+      var summaryText = checks.agree ? "Both checks agree." : anyDiff ? "The checks disagree, so a person should look." : "Not enough clear views to decide, so a person should look.";
+      panel.appendChild(el("p", "checks-summary", summaryText));
+      toggle.addEventListener("click", function () {
+        panel.hidden = !panel.hidden;
+        toggle.setAttribute("aria-expanded", String(!panel.hidden));
+      });
+      d.appendChild(toggle); d.appendChild(panel);
+    }
+    if (cc.timestamp !== undefined && cc.timestamp !== null) {
+      var jb = el("button", "btn btn-secondary", "Jump to " + fmtTime(cc.timestamp));
+      jb.style.marginTop = "8px";
+      jb.addEventListener("click", function () {
+        var v = document.getElementById("mainVideo");
+        if (v) {
+          try {
+            v.currentTime = Number(cc.timestamp) || 0;
+            v.play();
+          } catch (e) {}
+        }
+      });
+      d.appendChild(jb);
+    }
+    return d;
+  }
+  function renderResults(scanId, man) {
+    app.textContent = "";
+    var mediaType = man.media_type || "video";
+    var isImg = mediaType === "image";
+    var kindLabel = isImg ? "Photo" : "Video";
+    var head = el("div", "card");
+    head.appendChild(el("h2", null, "Scan results — " + kindLabel));
+    var conts = man.containers || [];
+    if (!conts.length) {
+      var amber = el("div", "card");
+      amber.setAttribute("role", "alert");
+      amber.style.background = "#fffbeb";
+      amber.style.border = "2px solid #f59e0b";
+      amber.style.borderLeft = "8px solid #f59e0b";
+      amber.appendChild(el("h3", null, "Nothing detected — this is NOT a clear result"));
+      amber.appendChild(el("p", null, "The AI looked for tyres, buckets, pots, containers, drums, puddles, standing water and drains."));
+      amber.appendChild(el("p", null, "Small or partial water, wet surfaces, and dark or cluttered photos can be missed, so this result needs human judgement."));
+      amber.appendChild(el("p", null, "Next steps: take a closer photo, or record a short video walking around the area, and arrange manual on-site inspection."));
+      var costLine = el("p", "help", "Analysis cost: " + fmtCost(man.cost_usd));
+      amber.appendChild(costLine);
+      var btnRow = el("div", null, "");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+      btnRow.style.marginTop = "12px";
+      var again = el("button", "btn", "Scan again");
+      again.addEventListener("click", function () {
+        location.hash = "#/new";
+      });
+      var cmp2 = el("button", "btn btn-secondary", "Compare with rescan");
+      cmp2.addEventListener("click", function () {
+        var target = prompt("Enter the other scan ID to compare with:");
+        if (target) {
+          sessionStorage.setItem("compare_cur", target);
+          location.hash = "#/scan/" + scanId + "/compare";
+        }
+      });
+      btnRow.appendChild(again);
+      btnRow.appendChild(cmp2);
+      amber.appendChild(btnRow);
+      head.appendChild(amber);
+      var dis0 = el("p", "disclosure", "AI estimate, check on site. People are blurred automatically. Check before sharing.");
+      head.appendChild(dis0);
+      app.appendChild(head);
+      var mediaCard0 = el("div", "card video-wrap");
+      var note0 = el("p", "help", "No annotated media for this scan");
+      if (isImg) {
+        if (annotatedAvailable(man)) {
+          var im0 = document.createElement("img");
+          im0.alt = "Annotated result image";
+          im0.style.cursor = "zoom-in";
+          note0.hidden = true;
+          im0.onerror = function () {
+            try {
+              im0.remove();
+            } catch (e) {}
+            note0.hidden = false;
+          };
+          im0.addEventListener("click", function () {
+            lightboxImg.src = im0.src;
+            lightbox.classList.add("open");
+          });
+          im0.src = "/api/scans/" + encodeURIComponent(scanId) + "/annotated-video";
+          mediaCard0.appendChild(im0);
+          mediaCard0.appendChild(note0);
+        } else {
+          mediaCard0.appendChild(note0);
+        }
+      } else {
+        var v0 = document.createElement("video");
+        v0.id = "mainVideo";
+        v0.controls = true;
+        v0.preload = "metadata";
+        note0.hidden = true;
+        var showNote0 = function () {
+          try {
+            v0.remove();
+          } catch (e) {}
+          note0.hidden = false;
+        };
+        v0.onerror = showNote0;
+        v0.addEventListener("error", showNote0);
+        v0.src = "/api/scans/" + encodeURIComponent(scanId) + "/annotated-video";
+        mediaCard0.appendChild(v0);
+        mediaCard0.appendChild(note0);
+      }
+      app.appendChild(mediaCard0);
+      return;
+    }
+    head.appendChild(summaryCards(man));
+    var dis = el("p", "disclosure", "AI estimate, check on site. People are blurred automatically. Check before sharing.");
+    head.appendChild(dis);
+    var cmp = el("button", "btn btn-secondary", "Compare with rescan");
+    cmp.addEventListener("click", function () {
+      var target = prompt("Enter the other scan ID to compare with:");
+      if (target) {
+        location.hash = "#/scan/" + scanId + "/compare";
+        sessionStorage.setItem("compare_cur", target);
+      }
+    });
+    head.appendChild(cmp);
+    app.appendChild(head);
+    var mediaCard = el("div", "card video-wrap");
+    var note = el("p", "help", "No annotated media for this scan");
+    note.hidden = true;
+    var showNote = function () {
+      note.hidden = false;
+    };
+    if (isImg) {
+      if (annotatedAvailable(man)) {
+        var im = document.createElement("img");
+        im.alt = "Annotated result image";
+        im.style.cursor = "zoom-in";
+        im.onerror = function () {
+          try {
+            im.remove();
+          } catch (e) {}
+          showNote();
+        };
+        im.addEventListener("click", function () {
+          lightboxImg.src = im.src;
+          lightbox.classList.add("open");
+        });
+        im.src = "/api/scans/" + encodeURIComponent(scanId) + "/annotated-video";
+        mediaCard.appendChild(im);
+        mediaCard.appendChild(note);
+        mediaCard.appendChild(el("p", "help", "Tap the image to zoom. Esc closes."));
+      } else {
+        note.hidden = false;
+        mediaCard.appendChild(note);
+      }
+    } else {
+      var v = document.createElement("video");
+      v.id = "mainVideo";
+      v.controls = true;
+      v.preload = "metadata";
+      var failed = false;
+      var onFail = function () {
+        if (failed) {
+          return;
+        }
+        failed = true;
+        try {
+          v.remove();
+        } catch (e) {}
+        showNote();
+      };
+      v.onerror = onFail;
+      v.addEventListener("error", onFail);
+      v.src = "/api/scans/" + encodeURIComponent(scanId) + "/annotated-video";
+      mediaCard.appendChild(v);
+      mediaCard.appendChild(note);
+    }
+    app.appendChild(mediaCard);
+    var g = el("div", "grid");
+    sortedByRisk(conts).forEach(function (o) {
+      g.appendChild(containerCard(o.i, scanId, o.cc));
+    });
+    app.appendChild(g);
+    var oc = el("div", "card");
+    oc.appendChild(el("h3", null, "Work orders"));
+    var tog = el("div", "toggle-row");
+    var bEn = el("button", lang === "en" ? "active" : "", "English");
+    var bBn = el("button", lang === "bn" ? "active" : "", "বাংলা");
+    bEn.addEventListener("click", function () {
+      lang = "en";
+      renderResults(scanId, man);
+    });
+    bBn.addEventListener("click", function () {
+      lang = "bn";
+      renderResults(scanId, man);
+    });
+    tog.appendChild(bEn);
+    tog.appendChild(bBn);
+    oc.appendChild(tog);
+    fetch("/api/scans/" + encodeURIComponent(scanId)).then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; }).then(function (scan) {
+      sortedByRisk(conts).forEach(function (o) { oc.insertBefore(orderCard(scanId, scan, o.cc, o.i, false), pr); });
+    });
+    var pr = el("button", "btn", t("প্রিন্ট", "Print"));
+    pr.addEventListener("click", function () {
+      window.print();
+    });
+    oc.appendChild(pr);
+    app.appendChild(oc);
+  }
+  async function renderCompare(baseId) {
+    app.textContent = "";
+    var cur = sessionStorage.getItem("compare_cur") || "";
+    var c = el("div", "card");
+    c.appendChild(el("h2", null, "Rescan compare"));
+    c.appendChild(el("p", "help", "Not seen is not the same as fixed."));
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = cur;
+    inp.placeholder = "Other scan ID";
+    inp.setAttribute("aria-label", "Other scan ID");
+    c.appendChild(inp);
+    var go = el("button", "btn", "Compare");
+    go.style.marginLeft = "8px";
+    go.addEventListener("click", function () {
+      sessionStorage.setItem("compare_cur", inp.value.trim());
+      renderCompare(baseId);
+    });
+    c.appendChild(go);
+    app.appendChild(c);
+    var other = inp.value.trim();
+    if (!other) {
+      app.appendChild(el("div", "empty", "Enter a second scan ID to compare."));
+      return;
+    }
+    var box = el("div", "card");
+    box.appendChild(el("div", "skeleton", ""));
+    app.appendChild(box);
+    try {
+      var r = await fetch("/api/scans/" + encodeURIComponent(baseId) + "/compare/" + encodeURIComponent(other));
+      if (!r.ok) {
+        throw new Error("x");
+      }
+      var j = await r.json();
+      box.textContent = "";
+      var cols = el("div", "compare-cols");
+      var groups = [["fixed", "Fixed", j.fixed || []], ["risky", "Still risky", j.still_risky || j.stillRisky || []], ["new", "New", j.new || []], ["notseen", "Not seen", j.not_seen || j.notSeen || []]];
+      if (!j.fixed && j.groups) {
+        groups = [["fixed", "Fixed", j.groups.fixed || []], ["risky", "Still risky", j.groups.still_risky || []], ["new", "New", j.groups.new || []], ["notseen", "Not seen", j.groups.not_seen || []]];
+      }
+      groups.forEach(function (g) {
+        var col = el("div", "compare-col " + g[0]);
+        col.appendChild(el("h3", null, g[1] + " (" + g[2].length + ")"));
+        if (!g[2].length) {
+          col.appendChild(el("div", "help", "None."));
+        }
+        g[2].forEach(function (item) {
+          var p = el("div", "help", "");
+          p.textContent = typeof item === "string" ? item : (item.id || item.rule_id || "container");
+          col.appendChild(p);
+        });
+        cols.appendChild(col);
+      });
+      box.appendChild(cols);
+      box.appendChild(el("p", "help", "Not seen is not the same as fixed — the container may simply have been missed."));
+    } catch (e) {
+      box.textContent = "";
+      box.appendChild(el("div", "empty", "Could not compare these scans. Both scans need complete evidence."));
+    }
+  }
+  function areaLabel(value) {
+    if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(String(value || ""))) return "Untitled area";
+    return String(value || "Untitled area").replace(/^demo[ _-]+/i, "").replace(/\.[a-z0-9]{2,5}$/i, "").replace(/[_-]+/g, " ").trim() || "Untitled area";
+  }
+  function formatDate(value, time) {
+    if (!value) return "Date unavailable";
+    var v = String(value); if (!/[zZ]|[+-]\d\d:\d\d$/.test(v)) v += "Z";
+    var d = new Date(v); if (isNaN(d)) return "Date unavailable";
+    return d.toLocaleString(undefined, time ? {month:"short", day:"numeric", hour:"numeric", minute:"2-digit"} : {month:"short", day:"numeric"});
+  }
+  function addCounts(parent, summary) {
+    var q = summary || {};
+    ["high", "medium", "review", "low"].forEach(function (risk) {
+      if (!q[risk]) return;
+      var chip = el("span", "badge " + risk, q[risk] + (risk === "review" ? " to review" : " " + risk));
+      if (risk === "review") { chip.title = reviewHint; var hint = el("span", "sr-only", reviewHint); var id = "hint-" + Math.random().toString(36).slice(2); hint.id = id; chip.setAttribute("aria-describedby", id); chip.appendChild(hint); }
+      parent.appendChild(chip);
+    });
+  }
+  var explanations = {
+    R0:"The detector was not confident this is a container.", R1:reviewHint,
+    R1b:"Water was seen but the container was reported as not holding water, so a person should look.",
+    R2:"Both checks agree it looks empty or upside down: no standing water.",
+    R3:"Both checks agree an uncovered container is holding visible water.",
+    R4:"Both checks agree an uncovered container holds water and is exposed to rain.",
+    R5:"Both checks agree an uncovered container can hold water, but none is visible yet.",
+    R6:"Both checks agree the container is covered.", R7:"The checks gave incomplete answers, so a person should look.",
+    R8:"One check says an uncovered container can hold water and the other was unsure.",
+    R9:"One check clearly saw standing water in an uncovered container and the other did not disagree."
+  };
+  function orderCard(id, scan, cc, index, checkbox) {
+    var risk = riskClass(cc), card = el("div", "order-card " + risk), layout = el("div", "order-layout");
+    if (checkbox) { var label = el("label", "order-check"); var cb = document.createElement("input"); cb.type = "checkbox"; label.appendChild(cb); label.appendChild(el("span", "sr-only", "Mark order done")); layout.appendChild(label); }
+    var img = document.createElement("img"); img.className = "order-image"; img.loading = "lazy"; img.decoding = "async"; img.src = "/api/scans/" + encodeURIComponent(id) + "/evidence/" + index + "/crop"; img.alt = "Evidence of " + (cc.concept || "container"); layout.appendChild(img);
+    var body = el("div", "order-body"); var badge = el("span", "badge " + risk, riskIcon(risk) + risk); if (risk === "review") { badge.title = reviewHint; badge.setAttribute("aria-label", "Review. " + reviewHint); } body.appendChild(badge);
+    var concept = String(cc.concept || "Container").replace(/[_-]+/g, " "); concept = concept.charAt(0).toUpperCase() + concept.slice(1);
+    body.appendChild(el("h3", null, concept)); body.appendChild(el("div", "help", areaLabel(scan.area)));
+    var wo = cc.work_order || {}; var action = el("p", null, lang === "bn" ? (wo.action_bn || "সরেজমিনে পরিদর্শন করুন।") : (wo.action_en || "Inspect on site.")); if (lang === "bn") action.lang = "bn"; body.appendChild(action);
+    var due = wo.due_date; if (!due && scan.created_at) { var raw = String(scan.created_at); if (!/[zZ]|[+-]\d\d:\d\d$/.test(raw)) raw += "Z"; var date = new Date(raw); if (!isNaN(date)) { date.setUTCDate(date.getUTCDate() + ({high:0, medium:3, review:2, low:7}[risk])); due = date.toISOString(); } }
+    body.appendChild(el("div", "help", "Due: " + (due ? formatDate(due, false) : "Date unavailable") + (risk === "review" ? " · inspect" : "")));
+    var why = el("button", "why-button", "Why?"); why.type = "button"; why.setAttribute("aria-expanded", "false"); var detail = el("p", "help", explanations[cc.rule_id] || "A person should check this on site."); detail.hidden = true; if (cc.rule_id && explanations[cc.rule_id]) detail.appendChild(el("small", "rule-label", " Rule " + cc.rule_id));
+    why.addEventListener("click", function () { detail.hidden = !detail.hidden; why.setAttribute("aria-expanded", String(!detail.hidden)); }); body.appendChild(why); body.appendChild(detail); layout.appendChild(body); card.appendChild(layout); return card;
+  }
+  var mapObj = null;
+  async function renderMap() {
+    app.textContent = ""; var c = el("div", "card"); c.appendChild(el("h2", null, "Map")); var div = el("div"); div.id = "map"; div.setAttribute("aria-label", "Map of scans"); c.appendChild(div);
+    var legend = el("div", "map-legend"); ["high", "medium", "review", "low"].forEach(function (risk) { var item = el("span", "legend-" + risk, "● " + risk.charAt(0).toUpperCase() + risk.slice(1)); legend.appendChild(item); }); c.appendChild(legend); app.appendChild(c);
+    try {
+      var r = await fetch("/api/scans?limit=100"), data = await r.json(); var scans = (data.scans || []).filter(function (s) { return s.lat != null && s.lng != null; });
+      if (!scans.length) { c.appendChild(el("p", "empty", "No scans with a location yet.")); div.hidden = true; return; }
+      if (typeof L === "undefined") { c.appendChild(el("p", "empty", "The map could not load. Please check your connection.")); return; }
+      mapObj = L.map(div).setView([23.81, 90.41], 12); L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {attribution:"© OpenStreetMap contributors", maxZoom:19}).addTo(mapObj);
+      var bounds = []; var styles = getComputedStyle(document.documentElement);
+      scans.forEach(function (s) { var q = s.summary || {}; var risk = q.high ? "high" : q.medium ? "medium" : q.review ? "review" : q.low ? "low" : "review"; var color = styles.getPropertyValue(risk === "medium" ? "--risk-med" : "--risk-" + risk).trim();
+        var popup = el("div"); popup.appendChild(el("strong", null, areaLabel(s.area))); var counts = el("div", "chips"); addCounts(counts, q); popup.appendChild(counts); var link = el("a", null, "View scan"); link.href = "#/scan/" + encodeURIComponent(s.id); popup.appendChild(link);
+        L.circleMarker([s.lat, s.lng], {radius:9, color:color, fillColor:color, fillOpacity:0.85, weight:2}).bindPopup(popup).addTo(mapObj); bounds.push([s.lat, s.lng]); });
+      mapObj.fitBounds(bounds, {padding:[20,20], maxZoom:16});
+    } catch (e) { c.appendChild(el("p", "empty", "Map data is unavailable.")); }
+  }
+  var ordersCache = {}, ordersToken = 0;
+  function orderSkeleton() {
+    var d = el("div", "order-card order-skel");
+    d.setAttribute("aria-hidden", "true");
+    d.appendChild(el("div", "skeleton skel-thumb"));
+    var b = el("div", "skel-body");
+    ["skel-line short", "skel-line", "skel-line mid"].forEach(function (c) { b.appendChild(el("div", "skeleton " + c)); });
+    d.appendChild(b);
+    return d;
+  }
+  async function renderOrders() {
+    app.textContent = ""; var c = el("div", "card"); c.appendChild(el("h2", null, "Work orders")); var tog = el("div", "toggle-row");
+    ["en", "bn"].forEach(function (language) { var b = el("button", lang === language ? "active" : "", language === "en" ? "English" : "বাংলা"); b.addEventListener("click", function () { lang = language; renderOrders(); }); tog.appendChild(b); }); c.appendChild(tog);
+    var list = el("div"); c.appendChild(list); var print = el("button", "btn", "Print all"); print.addEventListener("click", function () { window.print(); }); c.appendChild(print); app.appendChild(c);
+    var token = ++ordersToken;
+    for (var k = 0; k < 4; k++) { list.appendChild(orderSkeleton()); }
+    try { var r = await fetch("/api/scans?limit=100"), data = await r.json(), all = [];
+      var scans = (data.scans || []).filter(function (s) { return s.status === "complete" && (!s.summary || s.summary.total > 0); });
+      var loaded = await Promise.all(scans.map(function (scan) {
+        if (ordersCache[scan.id]) { return Promise.resolve(ordersCache[scan.id]); }
+        return fetch("/api/scans/" + encodeURIComponent(scan.id) + "/results").then(function (rr) { if (!rr.ok) { return null; } return rr.json(); }).then(function (man) { if (man) { ordersCache[scan.id] = man; } return man; }).catch(function () { return null; });
+      }));
+      if (token !== ordersToken) { return; }
+      loaded.forEach(function (man, idx) { if (man) { (man.containers || []).forEach(function (cc, i) { all.push({scan: scans[idx], cc: cc, i: i}); }); } });
+      all.sort(function (a, b) { return ["high", "medium", "review", "low"].indexOf(riskClass(a.cc)) - ["high", "medium", "review", "low"].indexOf(riskClass(b.cc)); });
+      list.textContent = "";
+      var actionable = all.filter(function (o) { return riskClass(o.cc) !== "low"; }), lows = all.filter(function (o) { return riskClass(o.cc) === "low"; });
+      actionable.forEach(function (o) { list.appendChild(orderCard(o.scan.id, o.scan, o.cc, o.i, true)); });
+      if (!all.length) list.appendChild(el("div", "empty", "No work orders yet. Complete a scan to generate cleanup tasks."));
+      if (lows.length) {
+        var more = el("button", "btn btn-secondary", "Show " + lows.length + " low-risk containers (no action needed)");
+        more.addEventListener("click", function () { lows.forEach(function (o) { list.appendChild(orderCard(o.scan.id, o.scan, o.cc, o.i, true)); }); more.remove(); });
+        list.appendChild(more);
+      }
+    } catch (e) { list.textContent = ""; list.appendChild(el("div", "empty", "Could not load work orders.")); }
+  }
+  function renderHow() {
+    app.textContent = ""; var c = el("div", "card"); c.appendChild(el("h2", null, "How it works")); var ol = document.createElement("ol");
+    [["Ingest", "Video or photo is normalized on the server with ffmpeg at about 10 fps and a maximum of 1280 px.", "StillWater server on Modal (CPU)"],
+     ["Privacy", "Every frame is sent to a hosted person detector. Detected people are blurred before anything is saved or shown. Unblurred frames are sent to the hosted detector, and person recall is not guaranteed.", "Meta SAM 3.1 hosted image segmentation, concept: person"],
+     ["Scout", "Looks at the scene and proposes kinds of containers, such as tyres, buckets, pots, drums, puddles and drains. It names things; it does not segment.", "Muse Spark Open, open weights via Baseten"],
+     ["Track", "Segments and tracks each proposed concept across frames. A 480p, 5 fps proxy speeds this up; masks are scaled back.", "Meta SAM 3.1 hosted"],
+     ["Verify", "Two independent witnesses describe each candidate: whether it holds water, is covered, and has visible water. Disagreement or unsure answers are flagged for review.", "Muse Spark Open (Baseten) and Muse Spark 1.3 (Meta API); Muse Glimmer 30B on Modal L4 GPU was also built as an alternative second witness."],
+     ["Decide", "Fixed, auditable rules assign risk. Models describe; code decides.", "Fixed rules"],
+     ["Orders", "Bilingual Bangla and English cleanup work orders include photo evidence.", "StillWater server"]].forEach(function (step) { var li = el("li", "how-step"); li.appendChild(el("strong", null, step[0])); li.appendChild(el("p", null, step[1])); li.appendChild(el("small", "help", "Runs: " + step[2])); ol.appendChild(li); }); c.appendChild(ol);
+    var rules = el("table", "rules-table"); Object.keys(explanations).forEach(function (key) { var tr = el("tr"); tr.appendChild(el("td", null, ({R0:"Review",R1:"Review",R1b:"Review",R2:"Low",R3:"High",R4:"High",R5:"Medium",R6:"Low",R7:"Review",R8:"Medium",R9:"High"})[key])); tr.appendChild(el("td", null, explanations[key])); rules.appendChild(tr); }); c.appendChild(el("h3", null, "Decision rules")); c.appendChild(rules); app.appendChild(c);
+    var meta = el("div", "card"); meta.appendChild(el("h2", null, "Meta tooling")); meta.appendChild(el("p", null, "Meta SAM 3.1, Muse Spark Open, Muse Spark 1.3, Muse Glimmer 30B")); meta.appendChild(el("p", null, "Open weights: Muse Spark Open")); meta.appendChild(el("p", null, "Built Nov 2–4, 2026 for the Meta Global AI Developer Hackathon.")); app.appendChild(meta);
+    var ev = el("div", "card"); ev.appendChild(el("h2", null, "Evaluation")); app.appendChild(ev); fetch("/samples/eval.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw Error(); return r.json(); }).then(function (data) { ev.appendChild(el("p", null, data.note)); var wrap = el("div", "table-scroll"), table = el("table", "eval-table"), head = el("tr"); var cols = [["clip","Clip"],["seconds_of_video","Video length (s)"],["scan_seconds","Scan time (s)"],["cost_usd","Cost (USD)"],["high","High"],["medium","Medium"],["review","Review"],["low","Low"],["our_check","Our check"]]; cols.forEach(function (col) { head.appendChild(el("th", null, col[1])); }); table.appendChild(head); (data.rows || []).forEach(function (row) { var tr = el("tr"); cols.forEach(function (col) { tr.appendChild(el("td", null, String(row[col[0]] == null ? "" : row[col[0]]))); }); table.appendChild(tr); }); wrap.appendChild(table); ev.appendChild(wrap); }).catch(function () { ev.appendChild(el("p", "help", "Evaluation data is unavailable.")); });
+  }
+  lightbox.addEventListener("click", function () {
+    lightbox.classList.remove("open");
+    lightboxImg.removeAttribute("src");
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      lightbox.classList.remove("open");
+    }
+  });
+  document.addEventListener("keydown", function (e) {
+    var tag = (e.target && e.target.tagName || "").toLowerCase();
+    if (e.key !== "n" && e.key !== "N") { return; }
+    if (e.ctrlKey || e.metaKey || e.altKey || tag === "input" || tag === "textarea" || tag === "select" || (e.target && e.target.isContentEditable)) { return; }
+    e.preventDefault();
+    if (location.hash !== "#/new" && location.hash !== "" ) { location.hash = "#/new"; }
+    else { window.scrollTo({ top: 0, behavior: "smooth" }); }
+    setTimeout(function () {
+      var dzEl = document.getElementById("dropzone");
+      if (dzEl) { dzEl.focus({ preventScroll: true }); }
+    }, 150);
+  });
+  window.addEventListener("hashchange", router);
+  checkHealth();
+  setInterval(checkHealth, 30000);
+  if (!location.hash) {
+    location.hash = "#/new";
+  }
+  router();
+})();
+</script>
+<script>
+(function () {
+  var root = document.documentElement, btn = document.getElementById("themeToggle");
+  if (!btn) { return; }
+  function apply(dark) {
+    if (dark) { root.setAttribute("data-theme", "dark"); } else { root.removeAttribute("data-theme"); }
+    btn.setAttribute("aria-pressed", dark ? "true" : "false");
+    btn.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
+  }
+  apply(root.getAttribute("data-theme") === "dark");
+  btn.addEventListener("click", function () {
+    var dark = root.getAttribute("data-theme") !== "dark";
+    apply(dark);
+    try { localStorage.setItem("sw-theme", dark ? "dark" : "light"); } catch (e) {}
+  });
+})();
+</script>
+</body>
+</html>

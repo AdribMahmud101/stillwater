@@ -1,0 +1,55 @@
+{
+  "source": "Baseten synthetic image scout",
+  "model": "meta-models/muse-spark-open-1026",
+  "attempts": [
+    {
+      "choices": [
+        {
+          "finish_reason": "stop",
+          "message": {
+            "content": "{\"scene\":{\"setting\":\"other\",\"notes\":\"Abstract blue square on light gray background; no real-world scene or containers visible.\"},\"extra_concepts\":[{\"noun\":\"rain barrel\",\"why\":\"Designed to capture and store rainwater from rooftops and gutters.\"},{\"noun\":\"metal basin\",\"why\":\"Open shallow container that easily collects and holds rainwater outdoors.\"},{\"noun\":\"paint can\",\"why\":\"Open metal can left outside can accumulate rainwater quickly.\"},{\"noun\":\"styrofoam cooler\",\"why\":\"Open insulated box can hold pooled rainwater if left uncovered.\"}]}"
+          }
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 347,
+        "completion_tokens": 1076,
+        "total_tokens": 1423,
+        "prompt_tokens_details": {
+          "audio_tokens": 0,
+          "cached_tokens": 0
+        },
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": 798,
+          "audio_tokens": 0,
+          "reasoning_tokens": 954,
+          "rejected_prediction_tokens": 1148
+        }
+      }
+    }
+  ],
+  "validated": {
+    "scene": {
+      "setting": "other",
+      "notes": "Abstract blue square on light gray background; no real-world scene or containers visible."
+    },
+    "extra_concepts": [
+      {
+        "noun": "rain barrel",
+        "why": "Designed to capture and store rainwater from rooftops and gutters."
+      },
+      {
+        "noun": "metal basin",
+        "why": "Open shallow container that easily collects and holds rainwater outdoors."
+      },
+      {
+        "noun": "paint can",
+        "why": "Open metal can left outside can accumulate rainwater quickly."
+      },
+      {
+        "noun": "styrofoam cooler",
+        "why": "Open insulated box can hold pooled rainwater if left uncovered."
+      }
+    ]
+  }
+}
